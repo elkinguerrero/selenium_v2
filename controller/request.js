@@ -6,7 +6,7 @@ const chrome = require('selenium-webdriver/chrome');
 router.post('/test', async (req, res) => {
     const config = {
         //Intentos de buscar un elemento que no existe
-        int_search_element:0,
+        int_search_element:3,
         //Intervalo de tiempo de busqueda de un objeto en milisegundos
         time_default_interval:0,
         //Tiempo de espera del selenium para busqueda de un elemento en milisegundos
