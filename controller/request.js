@@ -127,15 +127,18 @@ router.post('/test', async (req, res) => {
                 arr_query.push(
                     async function () {
                         if( !end_process ){
+                            console.log("Er 1")
                             //Se hace uso de la funcion wait para comprobar que el elemento realmente existe
                             await driver.wait(until.elementLocated(By.css(actions.vars.class)),config.time_selenium_interval).then(async function (webElement) {
                                 const v_object_class = object_class(actions.vars.class);
 
+                                console.log("Er 2")
                                 //Se busca el elemento esto es necesario por si la pagina cambia y el elemento no existe
                                 await driver.findElement(v_object_class).then(async function (element) {
                                     end_process = true;
                                     details = "";
 
+                                    console.log("Er 3")
                                     if( actions.action == "c" ){
                                         await driver.executeScript("arguments[0].scrollIntoView()", driver.findElement(v_object_class));
                                         await driver.sleep(1000);
@@ -171,8 +174,6 @@ router.post('/test', async (req, res) => {
                                     }
                                 });
                             }, function (err) {
-                                console.log( `---------------------------\nNo se encontro el elemento ${actions.vars.class} se intentara buscarlo de nuevo` )
-
                                 if( intent_petition > (config.int_search_element-1) ){
                                     console.log( `---------------------------\nclass or id ${actions.vars.class} not found` )
                                     end_process = true;
@@ -182,6 +183,7 @@ router.post('/test', async (req, res) => {
                                     });
                                     resolve( !actions.skip_error ? 0 : 1 );
                                 }else if( s_clase.indexOf(actions.vars.class) != -1 ){
+                                    console.log( `---------------------------\nNo se encontro el elemento ${actions.vars.class} se intentara buscarlo de nuevo` )
                                     intent_petition++;
                                     arr_query[s_clase.indexOf(actions.vars.class)]()
                                 }
