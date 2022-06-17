@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { Builder } = require('selenium-webdriver');
 const chrome = require('selenium-webdriver/chrome');
+var array_driver = [];
 
 router.post('/test', async (req, res) => {
     const config = {
@@ -12,11 +13,24 @@ router.post('/test', async (req, res) => {
         //Tiempo de espera del selenium para busqueda de un elemento en milisegundos
         time_selenium_interval:100
     };
+    let num_driver;
     let result_final = [];
     let intent_petition, end_process;
     
     const service = new chrome.ServiceBuilder('chromedriver/chromedriver');
-    const driver = new Builder().forBrowser('chrome').setChromeService(service).build();
+    // Se valida que el driver no este ocupado
+    for( let i=0; i<array_driver.length; i++)
+        if( !array_driver[i].status ){
+            num_driver = i;
+            array_driver[num_driver].status = true;
+            i=array_driver.length;
+        }
+
+    if( num_driver == undefined ){
+        num_driver = array_driver.length;
+    }
+
+    array_driver.push({ "status":true, "driver": new Builder().forBrowser('chrome').setChromeService(service).build() });
 
     const webdriver = require('selenium-webdriver'),
     By = webdriver.By,
@@ -46,9 +60,9 @@ router.post('/test', async (req, res) => {
         s_clase = [];
 
         //Se agranda la pantalla
-        await driver.manage().window().maximize();
+        await array_driver[num_driver].driver.manage().window().maximize();
 
-        driver.get(req.body.url_scraping).then(async function () {
+        array_driver[num_driver].driver.get(req.body.url_scraping).then(async function () {
             for( let i=0; i<actions.length; i++ ){
                 intent_petition = 0;
                 end_process = false;
@@ -60,7 +74,8 @@ router.post('/test', async (req, res) => {
     
             console.log(`Fin de ejecución de query`)
             res.json(result_final)
-            driver.quit()
+            array_driver[num_driver].status = false;
+            array_driver[num_driver].driver.quit()
         }, async function (err) {
             console.log("Error contolado 1")
         });
@@ -79,12 +94,12 @@ router.post('/test', async (req, res) => {
 
                         details = "";
                         if( !end_process ){                                
-                            driver.switchTo().alert().then(async function(e) {
+                            array_driver[num_driver].driver.switchTo().alert().then(async function(e) {
                                 details = await e.getText();
                                 if( actions.vars.class == 'alert_confirm' )
-                                    driver.switchTo().alert().accept();
+                                    array_driver[num_driver].driver.switchTo().alert().accept();
                                 else if( actions.vars.class == 'alert_deny' )
-                                    driver.switchTo().alert().dismiss();
+                                    array_driver[num_driver].driver.switchTo().alert().dismiss();
 
                                 if( !end_process ){
                                     end_process = true;
@@ -130,31 +145,31 @@ router.post('/test', async (req, res) => {
                     async function () {
                         if( !end_process ){
                             //Se hace uso de la funcion wait para comprobar que el elemento realmente existe
-                            await driver.wait(until.elementLocated(By.css(actions.vars.class)),config.time_selenium_interval).then(async function (webElement) {
+                            await array_driver[num_driver].driver.wait(until.elementLocated(By.css(actions.vars.class)),config.time_selenium_interval).then(async function (webElement) {
                                 const v_object_class = object_class(actions.vars.class);
 
                                 //Se busca el elemento esto es necesario por si la pagina cambia y el elemento no existe
-                                await driver.findElement(v_object_class).then(async function (element) {
+                                await array_driver[num_driver].driver.findElement(v_object_class).then(async function (element) {
                                     end_process = true;
                                     details = "";
 
                                     if( actions.action == "c" ){
-                                        await driver.executeScript("arguments[0].scrollIntoView()", driver.findElement(v_object_class));
-                                        await driver.sleep(1000);
-                                        await driver.findElement(v_object_class).click()
+                                        await array_driver[num_driver].driver.executeScript("arguments[0].scrollIntoView()", array_driver[num_driver].driver.findElement(v_object_class));
+                                        await array_driver[num_driver].driver.sleep(1000);
+                                        await array_driver[num_driver].driver.findElement(v_object_class).click()
                                     } else if( actions.action == "s" ){
-                                        details = await driver.findElement(v_object_class).sendKeys(actions.vars.text);
+                                        details = await array_driver[num_driver].driver.findElement(v_object_class).sendKeys(actions.vars.text);
                                     }  else if( actions.action == "gt" ){
-                                        details = await driver.findElement(v_object_class).getText();
+                                        details = await array_driver[num_driver].driver.findElement(v_object_class).getText();
                                     } else if( actions.action == "gv" ){
-                                        details = await driver.findElement(v_object_class).getAttribute("value");
+                                        details = await array_driver[num_driver].driver.findElement(v_object_class).getAttribute("value");
                                     } else if( actions.action == "w" ){
                                         await timeout(100);
-                                        await driver.findElement(v_object_class).clear();
-                                        await driver.findElement(v_object_class).sendKeys(actions.vars.text);
+                                        await array_driver[num_driver].driver.findElement(v_object_class).clear();
+                                        await array_driver[num_driver].driver.findElement(v_object_class).sendKeys(actions.vars.text);
                                         await timeout(1000);
                                     }else if( actions.action == "f" ){
-                                        details = await driver.findElement(v_object_class).getAttribute(actions.attribute);
+                                        details = await array_driver[num_driver].driver.findElement(v_object_class).getAttribute(actions.attribute);
                                         details = `Coincidencias encontradas: ${details.split(actions.find).length-1}`;
                                     }
 
