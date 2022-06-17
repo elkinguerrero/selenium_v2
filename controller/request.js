@@ -28,9 +28,8 @@ router.post('/test', async (req, res) => {
 
     if( num_driver == undefined ){
         num_driver = array_driver.length;
+        array_driver.push({ "status":true, "driver": new Builder().forBrowser('chrome').setChromeService(service).build() });
     }
-
-    array_driver.push({ "status":true, "driver": new Builder().forBrowser('chrome').setChromeService(service).build() });
 
     const webdriver = require('selenium-webdriver'),
     By = webdriver.By,
@@ -75,7 +74,7 @@ router.post('/test', async (req, res) => {
             console.log(`Fin de ejecución de query`)
             res.json(result_final)
             array_driver[num_driver].status = false;
-            array_driver[num_driver].driver.quit()
+            // array_driver[num_driver].driver.quit()
         }, async function (err) {
             console.log("Error contolado 1")
         });
